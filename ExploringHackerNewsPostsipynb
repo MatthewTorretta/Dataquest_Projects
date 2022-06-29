@@ -1,0 +1,335 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "collapsed": true
+   },
+   "source": [
+    "# Exploring Hacker News Posts"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Identifying How and When to Post on Hacker News\n",
+    "In this project we are tasked with providing a recommendation on what to post on Hacker News in order to reach the most people. Hacker News is a site started by the startup incubator Y Combinator, where user-submitted stories (known as \"posts\") are voted and commented upon, similar to reddit. Hacker News is extremely popular in technology and startup circles, and posts that make it to the top of Hacker News' listings can get hundreds of thousands of visitors as a result.\n",
+    "\n",
+    "We're specifically interested in posts whose titles begin with either 'Ask HN' or 'Show HN'. Users submit 'Ask HN' posts to ask the Hacker News community a specific question and 'Show HN' to show off projects or information relevant to the community.\n",
+    "\n",
+    "We'll compare these two types of posts to determine the following:\n",
+    "\n",
+    "Do Ask HN or Show HN receive more comments on average?\n",
+    "Do posts created at a certain time receive more comments on average?\n",
+    "Does this behavior change with points?\n",
+    "The dataset can be downloaded here."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Descriptions of the columns:\n",
+    "* <mark>id</mark>: the unique identifier from Hacker News for the post\n",
+    "* <mark>title</mark>: the title of the post\n",
+    "* <mark>url</mark>: the URL that the posts links to, if the post has a URL\n",
+    "* <mark>num_points</mark>: the number of points the post acquired, calculated as  the total number of upvotes minus the total number of downvotes\n",
+    "* <mark>num_comments</mark>: the number of comments on the post\n",
+    "* <mark>author</mark>: the username of the person who submitted the post\n",
+    "* <mark>created_at</mark>: the date and time of the post's submission"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from csv import reader\n",
+    "opened_file = open('hacker_news.csv')\n",
+    "read = reader(opened_file)\n",
+    "dataset = list(read)\n",
+    "#print(dataset[:5])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Headers\n",
+      "[['id', 'title', 'url', 'num_points', 'num_comments', 'author', 'created_at']]\n",
+      "\n",
+      "\n",
+      "Sample Data\n",
+      "['12224879', 'Interactive Dynamic Video', 'http://www.interactivedynamicvideo.com/', '386', '52', 'ne0phyte', '8/4/2016 11:52']\n",
+      "\n",
+      "\n",
+      "['10975351', 'How to Use Open Source and Shut the Fuck Up at the Same Time', 'http://hueniverse.com/2016/01/26/how-to-use-open-source-and-shut-the-fuck-up-at-the-same-time/', '39', '10', 'josep2', '1/26/2016 19:30']\n",
+      "\n",
+      "\n",
+      "['11964716', \"Florida DJs May Face Felony for April Fools' Water Joke\", 'http://www.thewire.com/entertainment/2013/04/florida-djs-april-fools-water-joke/63798/', '2', '1', 'vezycash', '6/23/2016 22:20']\n",
+      "\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "headers = dataset[:1]\n",
+    "hn = dataset[1:]\n",
+    "print(\"Headers\")\n",
+    "print(headers)\n",
+    "print('\\n')\n",
+    "\n",
+    "print(\"Sample Data\")\n",
+    "for row in hn[:3]:\n",
+    "    print(row)\n",
+    "    print('\\n')\n",
+    "    "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Extracting Ask HN and Show HN Posts\n",
+    "\n",
+    "To filter our data, we separate headers from the dataset and store them in a variable named headers.\n",
+    "\n",
+    "Since we're only concerned with post titles beginning with Ask HN or Show HN, we'll create new lists of lists containing just the data for those titles.\n",
+    "\n",
+    "To find the posts that begin with either Ask HN or Show HN, we'll use the string method startswith. since the startswith method is case sensitive, we'll use the lower method to control capitalization problem."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Number of Posts in 'ask_posts':  1744\n",
+      "Number of Posts in 'show_posts':  1162\n",
+      "Number of Posts in 'other_posts'):  17194\n"
+     ]
+    }
+   ],
+   "source": [
+    "ask_posts = []\n",
+    "show_posts = []\n",
+    "other_posts = []\n",
+    "\n",
+    "for row in hn:\n",
+    "    title = row[1].lower()\n",
+    "    if title.startswith('ask hn'):\n",
+    "        ask_posts.append(row)\n",
+    "    elif title.startswith('show hn'):\n",
+    "        show_posts.append(row)\n",
+    "    else:\n",
+    "        other_posts.append(row)\n",
+    "        \n",
+    "print(\"Number of Posts in 'ask_posts': \", len(ask_posts))\n",
+    "print(\"Number of Posts in 'show_posts': \", len(show_posts))\n",
+    "print(\"Number of Posts in 'other_posts'): \", len(other_posts))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "average number of comments on ask posts: 14.038417431192661\n",
+      "average number of comments on show posts 10.31669535283993\n"
+     ]
+    }
+   ],
+   "source": [
+    "# comments in ask posts\n",
+    "\n",
+    "total_ask_comments = 0\n",
+    "\n",
+    "for row in ask_posts:\n",
+    "    num_comments = int(row[4])\n",
+    "    total_ask_comments += num_comments\n",
+    "avg_ask_comments = total_ask_comments / len(ask_posts)    \n",
+    "print(\"average number of comments on ask posts:\", avg_ask_comments)\n",
+    "\n",
+    "# comments in show posts\n",
+    "\n",
+    "total_show_comments = 0\n",
+    "\n",
+    "for row in show_posts:\n",
+    "    num_comments = int(row[4])\n",
+    "    total_show_comments += num_comments\n",
+    "avg_show_comments = total_show_comments / len(show_posts)\n",
+    "print(\"average number of comments on show posts\", avg_show_comments)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Ask HN posts are more likely to receive more comments than Show HN posts. When Ask HN got 14 comments, Show HN posts got 10 comments on average."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Finding the Number of Ask Posts and Comments by Hour Created"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Next, we'll determine if ask posts created at a certain time are more likely to attract comments. We'll use the following steps to perform this analysis:\n",
+    "\n",
+    "1. Calculate the number of ask posts creataed in each hour of the day, along with the number of comments received.\n",
+    "2. Calculate the average number of comments ask posts receive by hour created.\n",
+    "\n",
+    "We'll use the datetime module to work with the data in the created_at column."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Number of posts per each hour of the day: {9: 45, 13: 85, 10: 59, 14: 107, 16: 108, 23: 68, 12: 73, 17: 100, 15: 116, 21: 109, 20: 80, 2: 58, 18: 109, 3: 54, 5: 46, 19: 110, 1: 60, 22: 71, 8: 48, 4: 47, 0: 55, 6: 44, 7: 34, 11: 58}\n",
+      "Number of comments per each hour of the day: {9: 251, 13: 1253, 10: 793, 14: 1416, 16: 1814, 23: 543, 12: 687, 17: 1146, 15: 4477, 21: 1745, 20: 1722, 2: 1381, 18: 1439, 3: 421, 5: 464, 19: 1188, 1: 683, 22: 479, 8: 492, 4: 337, 0: 447, 6: 397, 7: 267, 11: 641}\n",
+      "\n",
+      "\n",
+      "[[9, 5.5777777777777775], [13, 14.741176470588234], [10, 13.440677966101696], [14, 13.233644859813085], [16, 16.796296296296298], [23, 7.985294117647059], [12, 9.41095890410959], [17, 11.46], [15, 38.5948275862069], [21, 16.009174311926607], [20, 21.525], [2, 23.810344827586206], [18, 13.20183486238532], [3, 7.796296296296297], [5, 10.08695652173913], [19, 10.8], [1, 11.383333333333333], [22, 6.746478873239437], [8, 10.25], [4, 7.170212765957447], [0, 8.127272727272727], [6, 9.022727272727273], [7, 7.852941176470588], [11, 11.051724137931034]]\n"
+     ]
+    }
+   ],
+   "source": [
+    "import datetime as dt\n",
+    "\n",
+    "result_list = []\n",
+    "for row in ask_posts:\n",
+    "    created_at = row[6]\n",
+    "    num_comments = int(row[4])\n",
+    "    result = [created_at,num_comments]\n",
+    "    result_list.append(result)\n",
+    "\n",
+    "counts_by_hour = {}\n",
+    "comments_by_hour = {}\n",
+    "for row in result_list:\n",
+    "    date = dt.datetime.strptime(row[0], \"%m/%d/%Y %H:%M\")\n",
+    "    hour = date.hour\n",
+    "    n_comments = row[1]\n",
+    "    \n",
+    "    if hour not in counts_by_hour:\n",
+    "        counts_by_hour[hour] = 1\n",
+    "        comments_by_hour[hour] = n_comments\n",
+    "    else:\n",
+    "        counts_by_hour[hour] += 1\n",
+    "        comments_by_hour[hour] += n_comments\n",
+    "\n",
+    "print(\"Number of posts per each hour of the day:\", counts_by_hour)\n",
+    "print(\"Number of comments per each hour of the day:\", comments_by_hour)\n",
+    "print('\\n')\n",
+    "\n",
+    "#Calculate the average number of comments per post\n",
+    "\n",
+    "avg_by_hour = []\n",
+    "\n",
+    "for item in counts_by_hour:\n",
+    "    avg = (comments_by_hour[item] / counts_by_hour[item])\n",
+    "    avg_by_hour.append([item, avg])\n",
+    "\n",
+    "print(avg_by_hour)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "To sort the average comments by each hour, we'll create a list that equals avg_by_hour with swapped columns and store it in a variable named swap_avg_by_hour"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Top 5 Hours for Ask Posts Comments\n",
+      "15:00: 38.59 average comments per post\n",
+      "02:00: 23.81 average comments per post\n",
+      "20:00: 21.52 average comments per post\n",
+      "16:00: 16.80 average comments per post\n",
+      "21:00: 16.01 average comments per post\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Create swapped list\n",
+    "\n",
+    "swap_avg_by_hour = []\n",
+    "for row in avg_by_hour:\n",
+    "    hour = row[0]\n",
+    "    avg = row[1]\n",
+    "    swap_avg_by_hour.append([avg, hour])\n",
+    "\n",
+    "# Sort by average comments\n",
+    "sorted_swap = sorted(swap_avg_by_hour, reverse=True)\n",
+    "\n",
+    "# Print 'Top 5 hours for Ask Posts Comments'\n",
+    "print(\"Top 5 Hours for Ask Posts Comments\")\n",
+    "for row in sorted_swap[:5]:\n",
+    "    hour = dt.datetime.strptime(str(row[1]), \"%H\")\n",
+    "    hour = hour.strftime(\"%H:%M\")\n",
+    "    print(\"{0}: {1:.2f} average comments per post\".format(hour, row[0]))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.2"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
